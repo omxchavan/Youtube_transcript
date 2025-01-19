@@ -37,7 +37,7 @@ def fetch_transcript(video_id):
 # Function to summarize the transcript using Gemini API
 def summarize_transcript(transcript_text):
     """Generate a summary of the given transcript using Google Generative AI."""
-    GEMINI_API_KEY = 'AIzaSyD_xFrv1YGDJgEJlxkQ3dtxmLgKZJpskGI'
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     data = {

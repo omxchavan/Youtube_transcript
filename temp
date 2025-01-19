@@ -1,0 +1,77 @@
+from flask import Flask, render_template, request
+from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
+import requests
+import json
+
+app = Flask(__name__)
+
+# Function to extract video ID from URL
+def get_video_id(youtube_url):
+    try:
+        if "?v=" in youtube_url:
+            return youtube_url.split("?v=")[1].split("&")[0]
+        elif "youtu.be" in youtube_url:
+            return youtube_url.split("youtu.be/")[1]
+        else:
+            return None
+    except Exception as e:
+        return None
+
+# Function to fetch transcript for the YouTube video
+def fetch_transcript(video_id):
+    try:
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+        return transcript
+    except NoTranscriptFound:
+        return None
+    except Exception as e:
+        return None
+
+# Function to summarize the transcript using Gemini API
+def summarize_transcript(transcript_text):
+    GEMINI_API_KEY = 'YOUR_API_KEY'
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": f"give me the summary of the YouTube transcription I provide: {transcript_text}"}
+                ]
+            }
+        ]
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    if response.status_code == 200:
+        response_data = response.json()
+        return response_data['candidates'][0]['content']['parts'][0]['text']
+    else:
+        return "Error summarizing the transcript."
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    summary = None
+    if request.method == "POST":
+        youtube_url = request.form.get("youtube_url")
+        video_id = get_video_id(youtube_url)
+
+        if video_id:
+            transcript = fetch_transcript(video_id)
+            if transcript:
+                transcript_text = " ".join([entry['text'] for entry in transcript])
+                summary = summarize_transcript(transcript_text)
+            else:
+                summary = "Transcript not found."
+        else:
+            summary = "Invalid YouTube URL."
+
+    return render_template("index.html", summary=summary)
+
+if __name__ == "__main__":
+    app.run(debug=True)

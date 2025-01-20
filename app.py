@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
 import requests
 import json
-import os
 # Initialize Flask app
 app = Flask(__name__)
 
@@ -37,7 +36,7 @@ def fetch_transcript(video_id):
 # Function to summarize the transcript using Gemini API
 def summarize_transcript(transcript_text):
     """Generate a summary of the given transcript using Google Generative AI."""
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    GEMINI_API_KEY = "AIzaSyD_xFrv1YGDJgEJlxkQ3dtxmLgKZJpskGI"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     data = {
@@ -87,5 +86,6 @@ def summarize():
         return "Transcript not found for the given video."
 
 # Run the app
-if __name__ == "__main__":
-    app.run()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
